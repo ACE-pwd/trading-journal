@@ -15,6 +15,24 @@ import { PlusCircle, ArrowUpDown, Eye, Image as ImageIcon } from 'lucide-react';
 type SortField = 'trade_date' | 'pair' | 'pnl' | 'result';
 type SortDir = 'asc' | 'desc';
 
+function SortHeader({ field, children, sortField, toggleSort }: { field: SortField; children: React.ReactNode; sortField: SortField; toggleSort: (field: SortField) => void }) { return (
+    <th
+      className="px-6 py-4.5 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider cursor-pointer hover:text-indigo-600 select-none transition-colors"
+      onClick={() => toggleSort(field)}
+    >
+      <span className="inline-flex items-center gap-1.5">
+        {children}{' '}
+        <ArrowUpDown
+          className={cn(
+            'w-3 h-3 transition-colors',
+            sortField === field ? 'text-indigo-600' : 'text-zinc-300'
+          )}
+        />
+      </span>
+    </th>
+  );
+}
+
 export default function JournalPage() {
   const { trades, loading, error } = useTrades();
   const [sortField, setSortField] = useState<SortField>('trade_date');
@@ -68,22 +86,7 @@ export default function JournalPage() {
     return result;
   }, [trades, sortField, sortDir, filterPair, filterResult, filterSession, filterDateFrom, filterDateTo]);
 
-  const SortHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
-    <th
-      className="px-6 py-4.5 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider cursor-pointer hover:text-indigo-600 select-none transition-colors"
-      onClick={() => toggleSort(field)}
-    >
-      <span className="inline-flex items-center gap-1.5">
-        {children}{' '}
-        <ArrowUpDown
-          className={cn(
-            'w-3 h-3 transition-colors',
-            sortField === field ? 'text-indigo-600' : 'text-zinc-300'
-          )}
-        />
-      </span>
-    </th>
-  );
+
 
   return (
     <div className="space-y-6">
@@ -156,13 +159,13 @@ export default function JournalPage() {
           <table className="w-full min-w-[800px]">
             <thead className="bg-zinc-50/50 dark:bg-zinc-900/30 border-b border-zinc-100 dark:border-zinc-850">
               <tr>
-                <SortHeader field="trade_date">Date</SortHeader>
-                <SortHeader field="pair">Pair</SortHeader>
+                <SortHeader sortField={sortField} toggleSort={toggleSort} field="trade_date">Date</SortHeader>
+                <SortHeader sortField={sortField} toggleSort={toggleSort} field="pair">Pair</SortHeader>
                 <th className="px-6 py-4.5 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">
                   Direction
                 </th>
-                <SortHeader field="result">Result</SortHeader>
-                <SortHeader field="pnl">PnL</SortHeader>
+                <SortHeader sortField={sortField} toggleSort={toggleSort} field="result">Result</SortHeader>
+                <SortHeader sortField={sortField} toggleSort={toggleSort} field="pnl">PnL</SortHeader>
                 <th className="px-6 py-4.5 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">
                   Session
                 </th>

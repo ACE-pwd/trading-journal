@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Trade } from '@/lib/types';
+import { isPreview, getPreviewTrades } from '@/lib/preview';
 
 export function useTrades() {
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -13,6 +14,10 @@ export function useTrades() {
     setLoading(true);
     setError(null);
     try {
+      if (isPreview) {
+        setTrades(getPreviewTrades());
+        return;
+      }
       const supabase = createClient();
       const { data, error: fetchError } = await supabase
         .from('trades')

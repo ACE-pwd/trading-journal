@@ -34,7 +34,7 @@ export default function WinLossPie({ wins, losses, breakeven }: WinLossPieProps)
         </p>
       </div>
 
-      <div className="h-64 w-full flex-1">
+      <div className="h-64 min-h-64 w-full shrink-0">
         {data.length === 0 ? (
           <div className="h-full flex items-center justify-center text-xs text-zinc-400">
             No trade data logged yet

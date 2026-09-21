@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useUser } from '@/hooks/useUser';
+import { isPreview, getPreviewTrades } from '@/lib/preview';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Trade, AiFeedback } from '@/lib/types';
@@ -27,6 +30,10 @@ import {
 export default function TradeDetailPage() {
   const { id } = useParams();
   const router = useRouter();
+  const { user } = useUser();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [actionError, setActionError] = useState('');
   const [trade, setTrade] = useState<Trade | null>(null);
   const [feedback, setFeedback] = useState<AiFeedback | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,6 +41,12 @@ export default function TradeDetailPage() {
 
   useEffect(() => {
     async function fetchTrade() {
+      if (isPreview) {
+        setTrade(getPreviewTrades().find(t => t.id === id) ?? null);
+        setFeedback(null);
+        setLoading(false);
+        return;
+      }
       const supabase = createClient();
       try {
         const { data, error } = await supabase
@@ -56,6 +69,7 @@ export default function TradeDetailPage() {
           if (fb) setFeedback(fb as AiFeedback);
         }
       } catch (err) {
+        setActionError('Unable to load this trade. Refresh and try again.');
         console.error('Failed to load trade:', err);
       } finally {
         setLoading(false);
@@ -66,9 +80,14 @@ export default function TradeDetailPage() {
 
   const handleAnalyze = async () => {
     if (!trade) return;
+    setActionError('');
     setAnalyzing(true);
     try {
       const result = await analyzeTrade(trade);
+      if (isPreview) {
+        setFeedback({ ...result, id: 'preview-feedback', trade_id: trade.id, created_at: new Date().toISOString() });
+        return;
+      }
       const supabase = createClient();
       const { data, error } = await supabase
         .from('ai_feedback')
@@ -82,9 +101,28 @@ export default function TradeDetailPage() {
       if (error) throw error;
       if (data) setFeedback(data as AiFeedback);
     } catch (err) {
+      setActionError('Could not save feedback. Please try again.');
       console.error('AI analysis insertion failed:', err);
     } finally {
       setAnalyzing(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!trade || deleting) return;
+    setActionError('');
+    if (isPreview) { setActionError('Deleting is disabled in local preview.'); return; }
+    if (!user) { setActionError('Please sign in again before deleting.'); return; }
+    setDeleting(true);
+    try {
+      const { data, error } = await createClient().from('trades').delete()
+        .eq('id', trade.id).eq('user_id', user.id).select('id').single();
+      if (error || !data) throw new Error('Trade could not be deleted. Refresh and try again.');
+      router.replace('/journal');
+      router.refresh();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to delete trade.');
+      setDeleting(false);
     }
   };
 
@@ -101,7 +139,7 @@ export default function TradeDetailPage() {
   if (!trade) {
     return (
       <div className="text-center py-20">
-        <p className="text-zinc-550 mb-4">Trade record not found</p>
+        <p className="text-zinc-550 mb-4">{actionError || 'Trade record not found'}</p>
         <Button variant="outline" onClick={() => router.push('/journal')}>
           Back to Journal
         </Button>
@@ -168,6 +206,22 @@ export default function TradeDetailPage() {
           {trade.result}
         </span>
       </div>
+
+      <div className="flex gap-3">
+        <Link href={`/journal/${trade.id}/edit`} className="text-sm font-semibold text-indigo-600 underline">Edit Trade</Link>
+        <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)} disabled={analyzing || deleting}>Delete Trade</Button>
+      </div>
+      {actionError && <p role="alert" className="text-red-600">{actionError}</p>}
+      {confirmDelete && (
+        <Card role="alertdialog" aria-labelledby="delete-title" aria-describedby="delete-description">
+          <h2 id="delete-title" className="font-bold">Delete this {trade.pair} trade?</h2>
+          <p id="delete-description" className="my-3 text-sm">This permanently removes the trade and its saved feedback. This cannot be undone.</p>
+          <div className="flex gap-3">
+            <Button variant="outline" disabled={deleting} onClick={() => setConfirmDelete(false)}>Keep Trade</Button>
+            <Button variant="danger" loading={deleting} onClick={handleDelete}>Confirm Delete</Button>
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Trade Details Panel */}

@@ -2,9 +2,11 @@
 
 import { useUser } from '@/hooks/useUser';
 import { createClient } from '@/lib/supabase/client';
-import { Menu, LogOut, User } from 'lucide-react';
+import { Menu, LogOut, User, PanelLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
+import { isPreview } from '@/lib/preview';
+import Link from 'next/link';
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -22,9 +24,11 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
   };
 
   return (
-    <header className="flex h-16 items-center justify-between px-6 border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+    <header className="shrink-0 flex h-16 items-center justify-between px-6 border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950">
       <div className="flex items-center gap-3">
+        <span className="hidden lg:flex items-center gap-2 text-xs text-slate-500"><PanelLeft className="w-4 h-4" /> Workspace <span className="text-slate-300 px-2">/</span> Trading journal</span>
         <button
+          aria-label="Open navigation"
           onClick={onMenuClick}
           className="lg:hidden p-2 -ml-2 rounded-xl text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-900 cursor-pointer"
         >
@@ -44,10 +48,15 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
           </div>
         )}
 
-        <Button variant="outline" size="sm" onClick={handleLogout} className="text-xs gap-1.5 py-1.5 px-3 rounded-lg border-zinc-200 hover:bg-zinc-50 hover:text-red-600">
+        {isPreview ? (
+          <div className="flex flex-wrap items-center gap-3 text-xs text-amber-700">
+            <span>Local preview · Sample data · Saving disabled</span>
+            <Link href="/login" className="text-indigo-600 underline">Login screen</Link>
+          </div>
+        ) : <Button variant="outline" size="sm" onClick={handleLogout} className="text-xs gap-1.5 py-1.5 px-3 rounded-lg border-zinc-200 hover:bg-zinc-50 hover:text-red-600">
           <LogOut className="w-3.5 h-3.5" />
           <span>Sign Out</span>
-        </Button>
+        </Button>}
       </div>
     </header>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { isPreview } from '@/lib/preview';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -18,6 +19,10 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isPreview) {
+      setError('Authentication is disabled in local preview. Open the dashboard to explore sample trades.');
+      return;
+    }
     setError('');
     setLoading(true);
 
@@ -32,8 +37,8 @@ export default function LoginPage() {
 
       router.push('/dashboard');
       router.refresh();
-    } catch (err: any) {
-      setError(err?.message || 'Invalid email or password');
+    } catch (err) {
+      setError((err instanceof Error ? err.message : '') || 'Invalid email or password');
     } finally {
       setLoading(false);
     }
@@ -42,6 +47,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4">
       <div className="w-full max-w-md space-y-6">
+        {isPreview && <Link href="/dashboard" className="block text-center text-sm text-indigo-600 underline">Local preview · Explore dashboard with sample data</Link>}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 bg-gradient-to-r from-indigo-500 to-indigo-700 bg-clip-text text-transparent">
             AI Trading Journal
@@ -85,7 +91,7 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/signup" className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">
               Create an account
             </Link>

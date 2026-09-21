@@ -23,8 +23,8 @@ interface PnlByPairBarProps {
 
 export default function PnlByPairBar({ data }: PnlByPairBarProps) {
   // Format tooltip currency values
-  const formatTooltip = (value: any) => {
-    const num = typeof value === 'number' ? value : parseFloat(value) || 0;
+  const formatTooltip = (value: unknown) => {
+    const num = typeof value === 'number' ? value : parseFloat(String(value)) || 0;
     const isPositive = num >= 0;
     return [`$${num.toFixed(2)}`, isPositive ? 'Net Profit' : 'Net Loss'];
   };
@@ -40,7 +40,7 @@ export default function PnlByPairBar({ data }: PnlByPairBarProps) {
         </p>
       </div>
 
-      <div className="h-64 w-full flex-1">
+      <div className="h-64 min-h-64 w-full shrink-0">
         {data.length === 0 ? (
           <div className="h-full flex items-center justify-center text-xs text-zinc-400">
             No trade data available

@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { isPreview } from '@/lib/preview';
 import type { User } from '@supabase/supabase-js';
 
 export function useUser() {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!isPreview);
 
   useEffect(() => {
+    if (isPreview) return;
     const supabase = createClient();
 
     // Get the current session

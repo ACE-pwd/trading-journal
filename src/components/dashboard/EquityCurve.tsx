@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import Card from '../ui/Card';
+import MetricInfo from '../ui/MetricInfo';
 
 interface EquityPoint {
   date: string;
@@ -21,9 +22,12 @@ interface EquityCurveProps {
 }
 
 export default function EquityCurve({ data }: EquityCurveProps) {
+  const baselineDate = data.length ? new Date(`${data[0].date}T12:00:00Z`) : null;
+  if (baselineDate) baselineDate.setUTCDate(baselineDate.getUTCDate() - 1);
+  const chartData = baselineDate ? [{ date: baselineDate.toISOString().slice(0, 10), equity: 0 }, ...data] : [];
   // Format tooltip currency values
-  const formatTooltip = (value: any) => {
-    const num = typeof value === 'number' ? value : parseFloat(value) || 0;
+  const formatTooltip = (value: unknown) => {
+    const num = typeof value === 'number' ? value : parseFloat(String(value)) || 0;
     const isPositive = num >= 0;
     return [`$${num.toFixed(2)}`, isPositive ? 'Profit' : 'Loss'];
   };
@@ -32,21 +36,21 @@ export default function EquityCurve({ data }: EquityCurveProps) {
     <Card className="flex flex-col">
       <div className="mb-4">
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-          Equity Curve
+          Equity curve <MetricInfo term="Equity curve" />
         </h3>
         <p className="text-xs text-zinc-400 dark:text-zinc-500">
-          Cumulative PnL growth over time
+          Cumulative realized P&L · zero starting baseline
         </p>
       </div>
 
-      <div className="h-64 w-full flex-1">
+      <div className="h-64 min-h-64 w-full shrink-0">
         {data.length === 0 ? (
           <div className="h-full flex items-center justify-center text-xs text-zinc-400">
             Not enough data points
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 10, right: 5, left: -20, bottom: 0 }}>
+            <AreaChart data={chartData} margin={{ top: 10, right: 5, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorEquity" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.15} />
@@ -88,10 +92,11 @@ export default function EquityCurve({ data }: EquityCurveProps) {
                 formatter={formatTooltip}
               />
               <Area
-                type="monotone"
+                type="linear"
                 dataKey="equity"
                 stroke="#4f46e5"
                 strokeWidth={2}
+                dot={data.length < 3 ? { r: 3 } : false}
                 fillOpacity={1}
                 fill="url(#colorEquity)"
               />

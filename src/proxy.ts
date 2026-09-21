@@ -1,7 +1,9 @@
-import { type NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
+import { isPreview } from '@/lib/preview';
 import { updateSession } from '@/lib/supabase/middleware';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
+  if (isPreview) return NextResponse.next();
   return await updateSession(request);
 }
 
