@@ -35,7 +35,7 @@ export default function DashboardPage() {
   const firstDate = stats.equity[0]?.date;
   const lastDate = stats.equity.at(-1)?.date;
 
-  return <div className="max-w-7xl mx-auto space-y-6 pb-6">
+  return <div className="max-w-7xl mx-auto space-y-6">
     <div className="flex flex-wrap gap-4 items-center justify-between">
       <div><p className="text-xs uppercase tracking-widest text-indigo-500 font-semibold mb-2">YOUR WORKSPACE</p><h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-white">Dashboard</h1><p className="text-sm text-zinc-500 mt-2">Every trade tells a story. Here’s yours.</p></div>
       <Link href="/add-trade"><Button><Plus className="w-4 h-4" /> Add Trade</Button></Link>
